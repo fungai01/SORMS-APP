@@ -1,19 +1,19 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  TouchableOpacity,
   RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+
 import type {RoleStackParamList} from '../../navigation/types';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../context/AuthContext';
 import apiClient from '../../services/apiClient';
+import {Button, Card, Header, LoadingBlock, Screen} from '../../components/ui/UiKit';
 
 interface Booking {
   id: number;
@@ -96,181 +96,125 @@ const UserBookingsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <Screen>
+      <Header
+        title="Đặt phòng"
+        subtitle="Quản lý các đặt phòng của bạn"
+        right={
+          <Button
+            title="Tạo mới"
+            onPress={() => navigation.navigate('UserCreateBooking')}
+            style={{height: 40, paddingHorizontal: 12}}
+          />
+        }
+      />
+
       <ScrollView
-        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-        <View style={styles.content}>
-          <View style={styles.headerRow}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.title}>Đặt phòng</Text>
-              <Text style={styles.subtitle}>Quản lý các đặt phòng của bạn</Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={() => navigation.navigate('UserCreateBooking')}>
-              <Text style={styles.createButtonText}>Tạo</Text>
-            </TouchableOpacity>
-          </View>
-
-          {loading ? (
-            <ActivityIndicator
-              size="large"
-              color="#2196F3"
-              style={styles.loader}
+        {loading ? (
+          <LoadingBlock />
+        ) : bookings.length === 0 ? (
+          <Card style={styles.emptyCard}>
+            <Text style={styles.emptyText}>Chưa có đặt phòng nào</Text>
+            <View style={{height: 10}} />
+            <Button
+              title="Tạo đặt phòng"
+              onPress={() => navigation.navigate('UserCreateBooking')}
             />
-          ) : bookings.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Chưa có đặt phòng nào</Text>
-            </View>
-          ) : (
-            bookings.map(booking => (
+          </Card>
+        ) : (
+          <View style={{gap: 10}}>
+            {bookings.map(booking => (
               <TouchableOpacity
                 key={booking.id}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
                 onPress={() =>
                   navigation.navigate('UserBookingDetail', {
                     bookingId: booking.id,
                   })
-                }
-                style={styles.bookingCard}>
-                <View style={styles.bookingHeader}>
-                  <Text style={styles.bookingCode}>{booking.code}</Text>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      {backgroundColor: getStatusColor(booking.status)},
-                    ]}>
-                    <Text style={styles.statusText}>{booking.status}</Text>
+                }>
+                <Card>
+                  <View style={styles.bookingHeader}>
+                    <Text style={styles.bookingCode}>{booking.code}</Text>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        {backgroundColor: getStatusColor(booking.status)},
+                      ]}>
+                      <Text style={styles.statusText}>{booking.status}</Text>
+                    </View>
                   </View>
-                </View>
-                <View style={styles.bookingInfo}>
-                  <Text style={styles.infoText}>
-                    Check-in: {formatDate(booking.checkinDate)}
-                  </Text>
-                  <Text style={styles.infoText}>
-                    Check-out: {formatDate(booking.checkoutDate)}
-                  </Text>
-                  <Text style={styles.infoText}>
-                    Số khách: {booking.numGuests}
-                  </Text>
-                  {booking.note && (
-                    <Text style={styles.noteText}>Ghi chú: {booking.note}</Text>
-                  )}
-                </View>
+
+                  <View style={styles.bookingInfo}>
+                    <Text style={styles.infoText}>
+                      Check-in: {formatDate(booking.checkinDate)}
+                    </Text>
+                    <Text style={styles.infoText}>
+                      Check-out: {formatDate(booking.checkoutDate)}
+                    </Text>
+                    <Text style={styles.infoText}>Số khách: {booking.numGuests}</Text>
+                    {booking.note ? (
+                      <Text style={styles.noteText}>Ghi chú: {booking.note}</Text>
+                    ) : null}
+                  </View>
+                </Card>
               </TouchableOpacity>
-            ))
-          )}
-        </View>
+            ))}
+          </View>
+        )}
+
+        <View style={{height: 10}} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-  },
-  headerRow: {
-    flexDirection: 'row',
+  emptyCard: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    gap: 12,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-  },
-  createButton: {
-    backgroundColor: '#2196F3',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  createButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  loader: {
-    marginVertical: 40,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 18,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#999',
-  },
-  bookingCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6B7280',
   },
   bookingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   bookingCode: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
   },
   statusBadge: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 999,
   },
   statusText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '800',
   },
   bookingInfo: {
-    gap: 8,
+    gap: 6,
   },
   infoText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    color: '#374151',
+    fontWeight: '600',
   },
   noteText: {
-    fontSize: 14,
-    color: '#999',
-    fontStyle: 'italic',
-    marginTop: 4,
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '600',
   },
 });
 

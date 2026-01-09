@@ -1,73 +1,68 @@
 import React from 'react';
-import {View, Text, StyleSheet, ScrollView} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {Image, StyleSheet, View} from 'react-native';
 import {useAuth} from '../context/AuthContext';
+import {Button, Screen, Header} from '../components/ui/UiKit';
 
 const ProfileScreen: React.FC = () => {
-  const {user} = useAuth();
+  const {user, logout} = useAuth();
+
+  const fullName = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView>
-        <View style={styles.content}>
-          <Text style={styles.title}>Thông tin cá nhân</Text>
-          {user && (
-            <View style={styles.infoContainer}>
-              <Text style={styles.label}>Email:</Text>
-              <Text style={styles.value}>{user.email}</Text>
+    <Screen>
+      <Header title="Tài khoản" subtitle={user?.email || ''} />
 
-              <Text style={styles.label}>Họ tên:</Text>
-              <Text style={styles.value}>
-                {user.firstName} {user.lastName}
-              </Text>
+      <View style={styles.center}>
+        {user?.avatarUrl ? (
+          <Image source={{uri: user.avatarUrl}} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatarPlaceholder} />
+        )}
 
-              {user.roles && user.roles.length > 0 && (
-                <>
-                  <Text style={styles.label}>Vai trò:</Text>
-                  {user.roles.map((role, index) => (
-                    <Text key={index} style={styles.value}>
-                      {role}
-                    </Text>
-                  ))}
-                </>
-              )}
-            </View>
-          )}
+        <View style={{height: 10}} />
+        <View style={styles.namePill}>
+          <Button
+            title={fullName || 'Người dùng'}
+            onPress={() => {}}
+            variant="secondary"
+            disabled
+            style={styles.namePillBtn}
+            textStyle={styles.namePillText}
+          />
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+
+      <View style={{height: 14}} />
+
+      <Button title="Đăng xuất" variant="danger" onPress={logout} />
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+  center: {
+    alignItems: 'center',
+    marginTop: 6,
   },
-  content: {
-    padding: 20,
+  avatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
+  avatarPlaceholder: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#E5E7EB',
   },
-  infoContainer: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 8,
+  namePill: {
+    width: '100%',
   },
-  label: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 15,
-    marginBottom: 5,
+  namePillBtn: {
+    height: 44,
   },
-  value: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+  namePillText: {
+    fontWeight: '800',
   },
 });
 

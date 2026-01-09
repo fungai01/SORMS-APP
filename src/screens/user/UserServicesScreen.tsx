@@ -1,14 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {RefreshControl, ScrollView, StyleSheet, Text, View} from 'react-native';
+
 import apiClient from '../../services/apiClient';
+import {Card, Header, LoadingBlock, Screen} from '../../components/ui/UiKit';
 
 interface Service {
   id: number;
@@ -59,135 +53,96 @@ const UserServicesScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <Screen>
+      <Header title="Dịch vụ" subtitle="Danh sách dịch vụ có sẵn" />
+
       <ScrollView
-        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-        <View style={styles.content}>
-          <Text style={styles.title}>Dịch vụ</Text>
-          <Text style={styles.subtitle}>Xem danh sách dịch vụ có sẵn</Text>
-
-          {loading ? (
-            <ActivityIndicator
-              size="large"
-              color="#2196F3"
-              style={styles.loader}
-            />
-          ) : services.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Không có dịch vụ nào</Text>
-            </View>
-          ) : (
-            services.map(service => (
-              <View key={service.id} style={styles.serviceCard}>
+        {loading ? (
+          <LoadingBlock />
+        ) : services.length === 0 ? (
+          <Card style={styles.emptyCard}>
+            <Text style={styles.emptyText}>Không có dịch vụ nào</Text>
+          </Card>
+        ) : (
+          <View style={{gap: 10}}>
+            {services.map(service => (
+              <Card key={service.id}>
                 <View style={styles.serviceHeader}>
-                  <Text style={styles.serviceName}>{service.name}</Text>
-                  <Text style={styles.serviceCode}>{service.code}</Text>
-                </View>
-                {service.description && (
-                  <Text style={styles.descriptionText}>
-                    {service.description}
-                  </Text>
-                )}
-                <View style={styles.priceContainer}>
+                  <View style={{flex: 1}}>
+                    <Text style={styles.serviceName}>{service.name}</Text>
+                    <Text style={styles.serviceCode}>{service.code}</Text>
+                  </View>
                   <Text style={styles.priceText}>
                     {formatCurrency(service.unitPrice)}
                   </Text>
-                  <Text style={styles.unitText}>/{service.unitName}</Text>
                 </View>
-              </View>
-            ))
-          )}
-        </View>
+
+                {service.description ? (
+                  <Text style={styles.descriptionText} numberOfLines={3}>
+                    {service.description}
+                  </Text>
+                ) : null}
+
+                <Text style={styles.unitText}>Đơn vị: {service.unitName}</Text>
+              </Card>
+            ))}
+          </View>
+        )}
+
+        <View style={{height: 10}} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
-  },
-  loader: {
-    marginVertical: 40,
-  },
-  emptyContainer: {
+  emptyCard: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 18,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#999',
-  },
-  serviceCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6B7280',
   },
   serviceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 6,
   },
   serviceName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
   },
   serviceCode: {
-    fontSize: 14,
-    color: '#666',
+    marginTop: 2,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6B7280',
   },
   descriptionText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
   },
   priceText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2196F3',
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#111827',
   },
   unitText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
+    marginTop: 8,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6B7280',
   },
 });
 

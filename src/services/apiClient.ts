@@ -103,7 +103,7 @@ class ApiClient {
             const refreshToken = await tokenManager.getRefreshToken();
             if (refreshToken) {
               const authData = await authService.refreshToken();
-              
+
               if (authData.token) {
                 // Retry request với token mới
                 originalRequest.headers.Authorization = `Bearer ${authData.token}`;
@@ -213,6 +213,13 @@ class ApiClient {
     }
   }
 
+  async checkoutBooking(bookingId: number, userId: string | number) {
+    return this.post(`/bookings/${bookingId}/checkout`, {
+      bookingId,
+      userId: String(userId),
+    });
+  }
+
   // GET request
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
     return this.request<T>('GET', endpoint);
@@ -225,6 +232,10 @@ class ApiClient {
     config?: InternalAxiosRequestConfig,
   ): Promise<ApiResponse<T>> {
     return this.request<T>('POST', endpoint, data, config);
+  }
+
+  async updateMyProfile(payload: any): Promise<ApiResponse<any>> {
+    return this.put('/users/profile', payload);
   }
 
   // PUT request
@@ -279,6 +290,12 @@ class ApiClient {
     return this.delete(`/bookings/${id}`);
   }
 
+  async createPayment(serviceOrderId: number) {
+    return this.post('/payments/create', {
+      serviceOrderId,
+    });
+  }
+
   // ========== Rooms API ==========
   async getRooms() {
     return this.get('/rooms');
@@ -298,15 +315,15 @@ class ApiClient {
     startTime?: string,
     endTime?: string,
   ) {
-    const params = new URLSearchParams();
+    const parts: string[] = [];
     if (startTime) {
-      params.set('startTime', startTime);
+      parts.push(`startTime=${encodeURIComponent(startTime)}`);
     }
     if (endTime) {
-      params.set('endTime', endTime);
+      parts.push(`endTime=${encodeURIComponent(endTime)}`);
     }
-    const qs = params.toString();
-    return this.get(`/rooms/by-status/${status}${qs ? `?${qs}` : ''}`);
+    const qs = parts.length ? `?${parts.join('&')}` : '';
+    return this.get(`/rooms/by-status/${status}${qs}`);
   }
 
   // ========== Services API ==========
@@ -321,9 +338,9 @@ class ApiClient {
   // ========== Orders API ==========
   // Backend requires bookingId
   async getOrdersByBooking(bookingId: number) {
-    const queryParams = new URLSearchParams();
-      queryParams.set('bookingId', bookingId.toString());
-    return this.get(`/orders/my-orders?${queryParams.toString()}`);
+    return this.get(
+      `/orders/my-orders?bookingId=${encodeURIComponent(String(bookingId))}`,
+    );
   }
 
   async getServiceOrder(id: number) {
@@ -370,13 +387,8 @@ class ApiClient {
   }
 
   async getStaffTasksForOrder(staffId: number, status?: string) {
-    const queryParams = new URLSearchParams();
-    if (status) {
-      queryParams.set('status', status);
-    }
-    const endpoint = `/orders/staff/${staffId}/tasks${
-      queryParams.toString() ? '?' + queryParams.toString() : ''
-    }`;
+    const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+    const endpoint = `/orders/staff/${staffId}/tasks${qs}`;
     return this.get(endpoint);
   }
 }

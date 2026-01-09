@@ -15,6 +15,7 @@ export type RoleStackParamList = {
   UserBookingDetail: {bookingId: number};
   UserCreateBooking: undefined;
   UserOrderDetail: {orderId: number};
+  EditProfile: undefined;
 
   // Optional: keep these screens reachable from Home buttons later
   UserRooms: undefined;

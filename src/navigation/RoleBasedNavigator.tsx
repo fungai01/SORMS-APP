@@ -15,6 +15,7 @@ import UserServicesScreen from '../screens/user/UserServicesScreen';
 
 // Common
 import ProfileScreen from '../screens/ProfileScreen';
+import EditProfileScreen from '../screens/user/EditProfileScreen';
 
 import UserBookingDetailScreen from '../screens/user/UserBookingDetailScreen';
 import UserCreateBookingScreen from '../screens/user/UserCreateBookingScreen';

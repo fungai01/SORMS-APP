@@ -1,19 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import apiClient from '../../services/apiClient';
 import type {RoleStackParamList} from '../../navigation/types';
+import {Button, Card, Header, LoadingBlock, Screen} from '../../components/ui/UiKit';
 
 type Nav = NativeStackNavigationProp<RoleStackParamList>;
 
@@ -44,10 +36,6 @@ const UserBookingDetailScreen: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState<Booking | null>(null);
-
-  useEffect(() => {
-    navigation.setOptions({headerShown: true, title: 'Chi tiết đặt phòng'});
-  }, [navigation]);
 
   useEffect(() => {
     load();
@@ -103,120 +91,102 @@ const UserBookingDetailScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}>
-        {loading ? (
-          <ActivityIndicator
-            size="large"
-            color="#2196F3"
-            style={styles.loader}
+    <Screen>
+      <Header
+        title="Chi tiết đặt phòng"
+        subtitle={booking ? booking.code : `Booking #${bookingId}`}
+        right={
+          <Button
+            title="Quay lại"
+            variant="secondary"
+            onPress={() => navigation.goBack()}
+            style={{height: 40, paddingHorizontal: 12}}
           />
+        }
+      />
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {loading ? (
+          <LoadingBlock />
         ) : !booking ? (
-          <View style={styles.emptyContainer}>
+          <Card style={styles.emptyCard}>
             <Text style={styles.emptyText}>Không tìm thấy booking</Text>
-            <TouchableOpacity style={styles.primaryButton} onPress={load}>
-              <Text style={styles.primaryButtonText}>Tải lại</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={{height: 10}} />
+            <Button title="Tải lại" onPress={load} />
+          </Card>
         ) : (
-          <>
-            <View style={styles.card}>
-              <View style={styles.headerRow}>
-                <Text style={styles.codeText}>{booking.code}</Text>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    {backgroundColor: getStatusColor(booking.status)},
-                  ]}>
-                  <Text style={styles.statusText}>{booking.status}</Text>
-                </View>
+          <Card>
+            <View style={styles.headerRow}>
+              <Text style={styles.codeText}>{booking.code}</Text>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {backgroundColor: getStatusColor(booking.status)},
+                ]}>
+                <Text style={styles.statusText}>{booking.status}</Text>
               </View>
-
-              <View style={styles.section}>
-                <Text style={styles.label}>Phòng</Text>
-                <Text style={styles.value}>Room ID: {booking.roomId}</Text>
-              </View>
-
-              <View style={styles.row}>
-                <View style={styles.col}>
-                  <Text style={styles.label}>Check-in</Text>
-                  <Text style={styles.value}>
-                    {formatDate(booking.checkinDate)}
-                  </Text>
-                </View>
-                <View style={styles.col}>
-                  <Text style={styles.label}>Check-out</Text>
-                  <Text style={styles.value}>
-                    {formatDate(booking.checkoutDate)}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.section}>
-                <Text style={styles.label}>Số khách</Text>
-                <Text style={styles.value}>{booking.numGuests}</Text>
-              </View>
-
-              {booking.note ? (
-                <View style={styles.section}>
-                  <Text style={styles.label}>Ghi chú</Text>
-                  <Text style={styles.value}>{booking.note}</Text>
-                </View>
-              ) : null}
             </View>
 
-            {/*
-              IMPORTANT: No delete/cancel action here.
-              Backend DELETE /bookings/{id} is ADMIN_SYSTEM/ADMINISTRATIVE only.
-            */}
-          </>
+            <View style={styles.section}>
+              <Text style={styles.label}>Phòng</Text>
+              <Text style={styles.value}>Room ID: {booking.roomId}</Text>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.col}>
+                <Text style={styles.label}>Check-in</Text>
+                <Text style={styles.value}>{formatDate(booking.checkinDate)}</Text>
+              </View>
+              <View style={styles.col}>
+                <Text style={styles.label}>Check-out</Text>
+                <Text style={styles.value}>{formatDate(booking.checkoutDate)}</Text>
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Số khách</Text>
+              <Text style={styles.value}>{booking.numGuests}</Text>
+            </View>
+
+            {booking.note ? (
+              <View style={styles.section}>
+                <Text style={styles.label}>Ghi chú</Text>
+                <Text style={styles.value}>{booking.note}</Text>
+              </View>
+            ) : null}
+          </Card>
         )}
+
+        <View style={{height: 10}} />
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#f5f5f5'},
-  scrollView: {flex: 1},
-  content: {padding: 20},
-  loader: {marginVertical: 40},
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+  emptyCard: {
+    alignItems: 'center',
+    paddingVertical: 18,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6B7280',
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  codeText: {fontSize: 18, fontWeight: 'bold', color: '#333'},
-  statusBadge: {paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12},
-  statusText: {color: '#fff', fontSize: 12, fontWeight: '600'},
-  row: {flexDirection: 'row', gap: 12},
+  codeText: {fontSize: 16, fontWeight: '800', color: '#111827'},
+  statusBadge: {paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999},
+  statusText: {color: '#fff', fontSize: 12, fontWeight: '800'},
+  row: {flexDirection: 'row', gap: 12, marginTop: 12},
   col: {flex: 1},
   section: {marginTop: 12},
-  label: {fontSize: 12, color: '#666', marginBottom: 4},
-  value: {fontSize: 15, color: '#333', fontWeight: '600'},
-  primaryButton: {
-    marginTop: 16,
-    backgroundColor: '#2196F3',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  primaryButtonText: {color: '#fff', fontSize: 15, fontWeight: '700'},
-  emptyContainer: {alignItems: 'center', paddingVertical: 40, gap: 12},
-  emptyText: {fontSize: 16, color: '#999'},
+  label: {fontSize: 12, color: '#6B7280', fontWeight: '700', marginBottom: 4},
+  value: {fontSize: 13, color: '#111827', fontWeight: '700'},
 });
 
 export default UserBookingDetailScreen;

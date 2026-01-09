@@ -1,20 +1,18 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import apiClient from '../../services/apiClient';
 import type {RoleStackParamList} from '../../navigation/types';
 import {useAuth} from '../../context/AuthContext';
+import {
+  Button,
+  Card,
+  Header,
+  LoadingBlock,
+  Screen,
+} from '../../components/ui/UiKit';
 
 type Nav = NativeStackNavigationProp<RoleStackParamList>;
 type Route = {key: string; name: string; params: {orderId: number}};
@@ -87,10 +85,6 @@ const OrderDetailScreen: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<Order | null>(null);
-
-  useEffect(() => {
-    navigation.setOptions({headerShown: true, title: 'Chi tiết đơn hàng'});
-  }, [navigation]);
 
   useEffect(() => {
     if (orderId) {
