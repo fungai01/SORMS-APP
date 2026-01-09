@@ -1,5 +1,17 @@
-rootProject.name = 'SORMSApp'
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
-include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
+// React Native 0.73.x settings
+pluginManagement {
+  includeBuild("../node_modules/@react-native/gradle-plugin")
+  repositories {
+    gradlePluginPortal()
+    google()
+    mavenCentral()
+  }
+}
 
+// Make the RN Gradle plugin available for `apply plugin: "com.facebook.react"`
+// in module build.gradle files.
+
+rootProject.name = "SORMSApp"
+include(":app")
+
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)

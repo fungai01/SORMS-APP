@@ -32,12 +32,20 @@ class ApiClient {
     });
 
     // Request interceptor - Add auth token
+    // NOTE:
+    // - Default behavior: send backend access token.
+    // - For specific requests (e.g. Google outbound authentication), callers can
+    //   disable this by setting `headers: { 'X-Skip-Auth': '1' }`.
     this.client.interceptors.request.use(
       async config => {
-        const token = await tokenManager.getAccessToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        const skipAuth = (config.headers as any)?.['X-Skip-Auth'] === '1';
+        if (!skipAuth) {
+          const token = await tokenManager.getAccessToken();
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
         }
+
         return config;
       },
       error => {
@@ -103,12 +111,14 @@ class ApiClient {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
     endpoint: string,
     data?: any,
+    config?: InternalAxiosRequestConfig,
   ): Promise<ApiResponse<T>> {
     try {
       const response = await this.client.request({
         method,
         url: endpoint,
         data,
+        ...(config || {}),
       });
 
       // Handle backend response format
@@ -146,8 +156,12 @@ class ApiClient {
   }
 
   // POST request
-  async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
-    return this.request<T>('POST', endpoint, data);
+  async post<T>(
+    endpoint: string,
+    data?: any,
+    config?: InternalAxiosRequestConfig,
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>('POST', endpoint, data, config);
   }
 
   // PUT request

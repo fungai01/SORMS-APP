@@ -1,5 +1,6 @@
 import {Platform} from 'react-native';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {decode as atob} from 'base-64';
 import apiClient from './apiClient';
 import {API_ENDPOINTS} from '../config/api';
 import {APP_CONSTANTS} from '../config/constants';
@@ -19,16 +20,23 @@ class AuthService {
    * Khởi tạo Google Sign-In
    */
   async initializeGoogleSignIn(): Promise<void> {
-    // webClientId là bắt buộc để lấy idToken
-    // Nếu không có webClientId, sử dụng Android Client ID làm fallback
-    const webClientId =
-      APP_CONSTANTS.GOOGLE_WEB_CLIENT_ID ||
-      APP_CONSTANTS.GOOGLE_ANDROID_CLIENT_ID;
+    // NOTE:
+    // For Google Sign-In, `webClientId` MUST be the OAuth Client ID of type "Web".
+    // Using the Android client id here will often produce an idToken with an `aud`
+    // that your backend will reject during verification (resulting in "Unauthenticated").
+    const webClientId = APP_CONSTANTS.GOOGLE_WEB_CLIENT_ID;
+
+    if (!webClientId) {
+      throw new Error(
+        'Missing GOOGLE_WEB_CLIENT_ID. Please set APP_CONSTANTS.GOOGLE_WEB_CLIENT_ID to your Google OAuth Web client id.',
+      );
+    }
 
     GoogleSignin.configure({
-      webClientId: webClientId,
+      webClientId,
       offlineAccess: true,
       scopes: ['openid', 'email', 'profile'],
+      // forceCodeForRefreshToken: true, // enable only if your backend needs server auth code
     });
   }
 
@@ -48,15 +56,58 @@ class AuthService {
         throw new Error('Không thể lấy ID token từ Google');
       }
 
-      // Gọi API backend để authenticate
+      // DEBUG: verify we really got a Google ID token (NOT your backend JWT)
+      // Safe to log only header/payload fields; do NOT log the full token in production.
+      try {
+        const [h, p] = idToken.split('.');
+        const decodePart = (s: string) => {
+          // base64url to base64
+          const base64 = s.replace(/-/g, '+').replace(/_/g, '/');
+          // atob requires padding, but base64url often omits it
+          const paddedBase64 = base64 + '==='.slice(0, (4 - (base64.length % 4)) % 4);
+          const decoded = atob(paddedBase64);
+          // Handle UTF-8 characters correctly
+          const utf8Decoded = decodeURIComponent(
+            Array.prototype.map
+              .call(decoded, c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join(''),
+          );
+          return JSON.parse(utf8Decoded);
+        };
+        const header = decodePart(h);
+        const payload = decodePart(p);
+        console.log('Google idToken header.alg:', header?.alg);
+        console.log('Google idToken payload.iss:', payload?.iss);
+        console.log('Google idToken payload.aud:', payload?.aud);
+        console.log('Google idToken payload.email:', payload?.email);
+      } catch (e) {
+        console.log('Could not decode idToken for debug');
+      }
+
+// Gọi API backend để authenticate
       const request: MobileOutboundAuthenticateRequest = {
         idToken,
         platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID',
       };
 
+      // DEBUG: log what we send to backend (do not log full tokens)
+      console.log('MOBILE_LOGIN request body:', request);
+      console.log(
+        'MOBILE_LOGIN Authorization Bearer (first 20):',
+        idToken.slice(0, 20),
+      );
+
+      // Backend expects the Google idToken BOTH in the request body and as a Bearer token.
+      // Also set X-Skip-Auth so apiClient won't overwrite Authorization with stored backend token.
       const response = await apiClient.post<AuthenticationResponse>(
         API_ENDPOINTS.AUTH.MOBILE_LOGIN,
         request,
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            'X-Skip-Auth': '1',
+          },
+        } as any,
       );
 
       // apiClient.post() trả về ApiResponse<T>, không phải { data: ApiResponse<T> }
