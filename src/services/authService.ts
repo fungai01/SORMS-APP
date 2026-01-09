@@ -91,20 +91,29 @@ class AuthService {
       };
 
       // DEBUG: log what we send to backend (do not log full tokens)
-      console.log('MOBILE_LOGIN request body:', request);
-      console.log(
-        'MOBILE_LOGIN Authorization Bearer (first 20):',
-        idToken.slice(0, 20),
-      );
+      const fp = (t: string) => `${t.slice(0, 16)}...${t.slice(-16)} (len=${t.length})`;
 
-      // Backend expects the Google idToken BOTH in the request body and as a Bearer token.
-      // Also set X-Skip-Auth so apiClient won't overwrite Authorization with stored backend token.
+      console.log('MOBILE_LOGIN request body:', {
+        platform: request.platform,
+        idTokenFp: fp(request.idToken),
+      });
+      console.log('MOBILE_LOGIN header Authorization fp:', fp(`Bearer ${idToken}`));
+
+      // IMPORTANT:
+      // - This is a LOGIN endpoint. Do NOT use your stored backend access token.
+      // - Send the Google idToken in BOTH places:
+      //   1) request body (idToken)
+      //   2) Authorization: Bearer <idToken>
+      // - Also set X-Skip-Auth so apiClient won't overwrite Authorization with stored token.
+      const authHeader = `Bearer ${idToken}`;
+
       const response = await apiClient.post<AuthenticationResponse>(
         API_ENDPOINTS.AUTH.MOBILE_LOGIN,
         request,
         {
           headers: {
-            Authorization: `Bearer ${idToken}`,
+            Authorization: authHeader,
+            authorization: authHeader as any, // some stacks normalize headers to lowercase
             'X-Skip-Auth': '1',
           },
         } as any,

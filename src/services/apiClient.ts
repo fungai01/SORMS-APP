@@ -46,6 +46,23 @@ class ApiClient {
           }
         }
 
+        // DEBUG: for login endpoint, print whether Authorization is present and whether skipAuth worked.
+        try {
+          const url = String(config.url || '');
+          if (url.includes('/auth/mobile/outbound/authentication')) {
+            const authHeader = (config.headers as any)?.Authorization;
+            const fp = (t: string) =>
+              `${t.slice(0, 16)}...${t.slice(-16)} (len=${t.length})`;
+            console.log('API DEBUG login request:', {
+              skipAuth,
+              baseURL: (config as any)?.baseURL,
+              url: (config as any)?.url,
+              hasAuthorization: !!authHeader,
+              authorizationFp: authHeader ? fp(String(authHeader)) : null,
+            });
+          }
+        } catch {}
+
         return config;
       },
       error => {
@@ -122,27 +139,73 @@ class ApiClient {
       });
 
       // Handle backend response format
-      if (response.data.responseCode === 'S0000') {
+      // Note: response interceptor may normalize successful responses into:
+      //   { success: true, data: <payload> }
+      // while the raw backend format is:
+      //   { responseCode: 'S0000', data: <payload>, message: 'SUCCESS' }
+      const d: any = response.data;
+
+      if (d?.success === true) {
         return {
           success: true,
-          data: response.data.data,
+          data: d.data,
         };
       }
 
+      if (d?.responseCode === 'S0000') {
+        return {
+          success: true,
+          data: d.data,
+        };
+      }
+
+      // DEBUG: show non-success backend responses
+      try {
+        console.error('API NON-SUCCESS RESPONSE:', {
+          status: response.status,
+          url: response.config?.url,
+          responseCode: d?.responseCode,
+          message: d?.message,
+          data: d,
+        });
+      } catch {}
+
       return {
         success: false,
-        error: response.data.message || 'Request failed',
-        data: response.data.data,
+        error: d?.message || 'Request failed',
+        data: d?.data,
       };
     } catch (error: any) {
       const axiosError = error as AxiosError;
       if (axiosError.response) {
         const errorData = axiosError.response.data as any;
+
+        // DEBUG: show server status + body (does not include tokens)
+        try {
+          console.error('API ERROR status:', axiosError.response.status);
+          console.error('API ERROR data:', errorData);
+        } catch {}
+
         return {
           success: false,
           error: errorData.message || errorData.error || axiosError.message,
         };
       }
+      // DEBUG: request failed before receiving any response (network/DNS/timeout/SSL)
+      try {
+        console.error('API ERROR no response:', {
+          message: error?.message,
+          code: (error as any)?.code,
+          name: (error as any)?.name,
+          config: {
+            baseURL: (axiosError as any)?.config?.baseURL,
+            url: (axiosError as any)?.config?.url,
+            method: (axiosError as any)?.config?.method,
+            timeout: (axiosError as any)?.config?.timeout,
+          },
+        });
+      } catch {}
+
       return {
         success: false,
         error: error.message || 'Network error',

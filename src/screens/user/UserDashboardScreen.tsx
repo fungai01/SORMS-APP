@@ -9,10 +9,15 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../../context/AuthContext';
 import apiClient from '../../services/apiClient';
 
+import type {RoleStackParamList} from '../../navigation/types';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 const UserDashboardScreen: React.FC = () => {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RoleStackParamList>>();
   const {user, logout} = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -108,6 +113,34 @@ const UserDashboardScreen: React.FC = () => {
           </View>
 
           <View style={styles.actionsContainer}>
+<View style={styles.quickActionsRow}>
+            <TouchableOpacity
+              style={styles.quickAction}
+              onPress={() =>
+                (navigation as any).navigate('UserRooms')
+              }>
+              <Text style={styles.quickActionTitle}>Phòng</Text>
+              <Text style={styles.quickActionSubtitle}>Xem danh sách</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickAction}
+              onPress={() =>
+                (navigation as any).navigate('UserOrders')
+              }>
+              <Text style={styles.quickActionTitle}>Đơn hàng</Text>
+              <Text style={styles.quickActionSubtitle}>Theo dõi</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickAction}
+              onPress={() =>
+                (navigation as any).navigate('UserServices')
+              }>
+              <Text style={styles.quickActionTitle}>Dịch vụ</Text>
+              <Text style={styles.quickActionSubtitle}>Đặt thêm</Text>
+            </TouchableOpacity>
+          </View>
             <Text style={styles.sectionTitle}>Hành động</Text>
 
             <TouchableOpacity
@@ -217,6 +250,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 15,
     borderRadius: 10,
+quickActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 15,
+  },
+  quickAction: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  quickActionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 4,
+  },
+  quickActionSubtitle: {
+    fontSize: 12,
+    color: '#666',
+  },
     marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: {

@@ -1,33 +1,25 @@
 import type {NavigatorScreenParams} from '@react-navigation/native';
 
-// User Tab routes
+// User Tab routes (tối giản)
 export type UserTabParamList = {
   UserDashboard: undefined;
   UserBookings: undefined;
-  UserRooms: undefined;
-  UserOrders: undefined;
-  UserServices: undefined;
+  Profile: undefined;
 };
 
-// Staff Tab routes
-export type StaffTabParamList = {
-  StaffDashboard: undefined;
-  StaffOrders: undefined;
-};
-
-// Root role-based stack
+// Root role-based stack (USER-only)
 export type RoleStackParamList = {
   UserTabs: NavigatorScreenParams<UserTabParamList>;
-  StaffTabs: NavigatorScreenParams<StaffTabParamList>;
-  Profile: undefined;
 
-  // User flows
+  // Extra user flows (opened from Home / Bookings)
   UserBookingDetail: {bookingId: number};
   UserCreateBooking: undefined;
   UserOrderDetail: {orderId: number};
 
-  // Staff flows
-  StaffOrderDetail: {orderId: number};
+  // Optional: keep these screens reachable from Home buttons later
+  UserRooms: undefined;
+  UserOrders: undefined;
+  UserServices: undefined;
 };
 
 export type RootStackParamList = {
